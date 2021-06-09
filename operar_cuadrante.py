@@ -44,8 +44,11 @@ for posicion in range(0,len(clusters)):
     if clusters[posicion]["coordenada_red"][1]+1<=48:
       enlace["alrededores"].append([clusters[posicion]["coordenada_red"][0]-1,clusters[posicion]["coordenada_red"][1]+1,distanceInKmBetweenEarthCoordinates(clusters[posicion]["cluster"],clusters[(clusters[posicion]["coordenada_red"][0]-1)*48+clusters[posicion]["coordenada_red"][1]+1]["cluster"])])   
   enlaces.append(enlace)
-print(clusters[0],clusters[1],clusters[49])
+#print(clusters[0],clusters[1],clusters[49])
 print(enlaces)
+
+with open('enlaces.json', 'w') as outfile:
+    json.dump(enlaces, outfile)
 #
 # 
 # print(distanceInKmBetweenEarthCoordinates(clusters[0]["cluster"],clusters[1]["cluster"]))
