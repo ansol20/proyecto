@@ -26,6 +26,9 @@ for posicion in range(0,len(clusters)):
   enlace = {"centro":clusters[posicion]["coordenada_red"], "alrededores":[]}
   if clusters[posicion]["coordenada_red"][0]+1<=48:
     if clusters[posicion]["coordenada_red"][1]-1>=0:
+      #agregar hospitales por punto y la distancia al cluster
+      #posicion 0, es la x, posicion 1, es la y, posicion 3 es la distancia en km.
+      #Encontramos el cuadrante el hospital, a partir del cuadrante, buscamos todos los clusters y hospitales en los cluster al rededor. 
       enlace["alrededores"].append([clusters[posicion]["coordenada_red"][0]+1,clusters[posicion]["coordenada_red"][1]-1,distanceInKmBetweenEarthCoordinates(clusters[posicion]["cluster"],clusters[(clusters[posicion]["coordenada_red"][0]+1)*49+clusters[posicion]["coordenada_red"][1]-1]["cluster"])])
     enlace["alrededores"].append([clusters[posicion]["coordenada_red"][0]+1,clusters[posicion]["coordenada_red"][1],distanceInKmBetweenEarthCoordinates(clusters[posicion]["cluster"],clusters[(clusters[posicion]["coordenada_red"][0]+1)*49+clusters[posicion]["coordenada_red"][1]]["cluster"])])
     if clusters[posicion]["coordenada_red"][1]+1<=48:
