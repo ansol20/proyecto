@@ -33,6 +33,7 @@ exclusiones = ["Hospital","Centro Médico Familias Saludables","Hospital Caldero
 "Hospital Veterinario Lucky","Hospital Veterinario MedicVet","IESS La Ecuatoriana","hospital solca","Centro Medico Iess",
 "hospital iess sangolqui","IESS Agencia River Mall","Hospital emergencias San Francisco","Hosteria Los Cactus IESS",
 "Centro De Salud Uyumbicho","Centro Medico IESS Amaguaña","Subcentro de salud de cotogchoa"]
+
 hmaxlat =""
 max_latitude=-1000
 hminlat =""
@@ -43,12 +44,14 @@ max_longitude=-1000
 hminlong = ""
 min_longitude=1000
 hospitales = []
+
+#excluyo los hospitales con (exclusiones-depuracion manual)
 for hospital in total_hospitales:
     if not excluir_hospitales(hospital["nombre"],exclusiones):
         hospitales.append(hospital)
 numero = 1 
 for hospital in hospitales:
-    print(numero,". ", hospital["nombre"],hospital["coordenadas"])
+    #print(numero,". ", hospital["nombre"],hospital["coordenadas"])
     numero+=1
     if max_latitude < hospital["coordenadas"][0]:
         max_latitude = hospital["coordenadas"][0]
@@ -62,4 +65,13 @@ for hospital in hospitales:
     if min_longitude > hospital["coordenadas"][1]:
         min_longitude = hospital["coordenadas"][1]
         hminlong = hospital["nombre"]
-print(max_latitude,hmaxlat,min_latitude,hminlat,max_longitude,hmaxlong,min_longitude,hminlong)
+with open('SoloHospitales.json', 'w') as outfile:
+    json.dump(hospitales, outfile)
+CoordenadasMaximas = {"superior_izquierda":[max_latitude,min_longitude],"superior_derecha":[max_latitude, max_longitude],
+                      "inferior_izquierda":[min_latitude,min_longitude],"inferior_derecha":[min_latitude,max_longitude]}
+
+
+#comprobar CoordenadasMaximas
+with open('CoordenadasMaximas.json', 'w') as outfile:
+    json.dump(CoordenadasMaximas, outfile)
+
