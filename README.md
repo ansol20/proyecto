@@ -5,6 +5,8 @@ Proyecto Capstone:Enrutado óptimo de drones entre puntos de interés en la ciud
 Introducción
 ----------
 
+Proyecto que consiste en el diseño, contrucción e implementación de un modelo de simulación de enrutado óptimo para drones de entrega entre puntos de interés `Hospitales` dentro de la ciudad de Quito.
+
 <!-- `github-download` downloads commit comments and select issues metadata, saving the raw JSON and writing summary `.csv` files.
 
 Busqueda de Datos
