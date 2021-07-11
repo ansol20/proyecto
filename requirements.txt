@@ -1,6 +1,4 @@
-socketserver
-networkx
-pandas
-json
-base64
-http.server
+networkx==2.5
+pandas==1.2.4
+json==0.9.5
+
