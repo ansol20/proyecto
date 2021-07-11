@@ -1,1 +1,1 @@
-run server_web.py
+web: run server_web.py
