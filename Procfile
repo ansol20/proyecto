@@ -1,1 +1,1 @@
-web: sh setup.sh && streamlit run server_web.py
+web: sh setup.sh && run index.html
