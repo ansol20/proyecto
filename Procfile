@@ -1,1 +1,1 @@
-web: sh setup.sh && run index.html
+web: python server_web.py
