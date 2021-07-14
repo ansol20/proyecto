@@ -25,11 +25,27 @@
                 <td>
                     <select id="final"></select>
                 </td>                
-            </tr>            
+            </tr> 
+            <tr>
+                <td>
+                    Tipo de coneccion:
+                </td>
+                <td>
+                    <select id="cluster"><option>Cluster</option><option>Full connected</option></select>
+                </td>                
+            </tr> 
+            <tr>
+                <td>
+                    Distancia Maxima:
+                </td>
+                <td>
+                    <input type="input" id="dmax"></input>
+                </td>                
+            </tr>                                    
         </table>
 
         <br>
-        <button onclick='request_minimum_path(document.getElementById("inicio").selectedIndex,document.getElementById("final").selectedIndex)'>
+        <button onclick='request_minimum_path(document.getElementById("inicio").selectedIndex,document.getElementById("final").selectedIndex,document.getElementById("cluster").selectedIndex,document.getElementById("dmax").value)'>
             Buscar Ruta
         </button>
         <br>
@@ -40,24 +56,32 @@
        
 
         <script>
+            document.getElementById("dmax").value = 12
             let hospitales;
             let map = L.map('map').setView([-0.089744, -78.476564], 13);
             let layerRouter = new L.LayerGroup();
+            let LayerHospital = new L.LayerGroup();
             var hospitalIcon = L.icon({
                 iconUrl: 'hospital42.png',
-                iconSize:     [8, 8], 
-                iconAnchor:   [4, 4], 
-                popupAnchor:  [0, -4] 
+                iconSize:     [16, 16], 
+                iconAnchor:   [8, 8], 
+                popupAnchor:  [0, -8] 
             });
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                 attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
             }).addTo(map);   
             request_json_hospitales();                 
-            function request_minimum_path(origin,end){
+            function request_minimum_path(origin,end,data,distancia_maxima){
                 //console.log(origin,end);
                 var oReq = new XMLHttpRequest();
                 oReq.addEventListener("load", reqListener);
-                oReq.open("GET", "/request_min_path?inicio=" +origin + "&" + "final=" +end);
+                //Aqui restricciones minimas y maximas
+                if(distancia_maxima>14){
+                    document.getElementById("dmax").value=14;
+                    distancia_maxima =14;
+                }
+
+                oReq.open("GET", "/request_min_path?inicio=" +origin + "&" + "final=" +end+ "&" + "data=" +data+ "&" + "distancia_maxima=" +distancia_maxima);
                 oReq.send();
             }
             function request_json_hospitales(){
@@ -86,13 +110,15 @@
                      layerRouter.removeLayer(i._leaflet_id);
                  }
                  var pointList = [];
-                            
+    
+                let ruta = {"ruta":[]};
                  for(let i=0; i<data.length;i++){
-                    pointList.push(new L.LatLng(hospitales["Coordenada_hospital"][data[i]][0], hospitales["Coordenada_hospital"][data[i]][1]))
-                    color = "red"
-                    if(!i)
+                     ruta.ruta.push([hospitales["Coordenada_hospital"][data[i]][0],hospitales["Coordenada_hospital"][data[i]][1]]);
+                     pointList.push(new L.LatLng(hospitales["Coordenada_hospital"][data[i]][0], hospitales["Coordenada_hospital"][data[i]][1]))
+                     color = "red"
+                     if(!i)
                         color = "blue"
-                    else if(i==data.length-1)
+                     else if(i==data.length-1)
                         color = "green"
                     let circle = L.circle(hospitales["Coordenada_hospital"][data[i]],200, {
                         color: color,
@@ -100,11 +126,20 @@
                         fillOpacity: 0.5
                     }).addTo(layerRouter);
                     
-                    let realMarker = L.marker(hospitales["Coordenada_hospital"][data[i]],{icon: hospitalIcon}).bindPopup(hospitales["nombre"][data[i]]).addTo(layerRouter);
-                    realMarker.circle=circle;
+                    
                     
                 }
-
+                if(data.length==0){
+                    alert("No existe la ruta para esa distancia minima");
+                }
+                else{
+                const a = document.createElement('a');
+                a.setAttribute('href', 'data:text/plain;charset=utf-8, '+ encodeURIComponent(JSON.stringify(ruta))); 
+                a.setAttribute('download', "ruta.txt");
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+            }
                 let firstpolyline = new L.Polyline(pointList, {
                     color: 'red',
                     weight: 3,
@@ -121,13 +156,23 @@
                 let select = document.getElementById("inicio");
                 let select2 = document.getElementById("final");
                 
-                for(numero in data.nombre){                   
+                for(numero in data.nombre){                  
                     let option = document.createElement("option");
                     option.innerHTML = data.nombre[numero];
                     let option2 = document.createElement("option");
                     option2.innerHTML = data.nombre[numero];
                     select.appendChild(option);
                     select2.appendChild(option2);
+                }
+                for(let i in hospitales["Coordenada_hospital"]){
+                    let circle = L.circle(hospitales["Coordenada_hospital"][i],200, {
+                        color: "black",
+                        fillColor: "black",
+                        fillOpacity: 0.2
+                    }).addTo(LayerHospital);
+                    let hmarker = L.marker(hospitales["Coordenada_hospital"][i],{icon: hospitalIcon}).bindPopup(hospitales["nombre"][i]).addTo(LayerHospital);
+                    hmarker.circle = circle;
+                    map.addLayer(LayerHospital);
                 }
             }          
       
