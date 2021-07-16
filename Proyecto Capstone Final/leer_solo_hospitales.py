@@ -9,6 +9,7 @@ def excluir_hospitales(hospital,arreglo_exclusiones):
             return True
     return False
 
+
 exclusiones = ["Hospital","Centro Médico Familias Saludables","Hospital Calderon","CRUZ ROJA","Hospital Del Dia","Servidores Del Iess",
 "Terreno en venta Coop Servidores del IESS","Iess Unidad Medica Sur Occidental","IESS",
 "IEES-Punto de Atención, Quito Norte","DIRECCION NACIONAL DE GESTION ARCHIVO NORTE IESS",
@@ -40,7 +41,7 @@ hospitales = []
 for hospital in total_hospitales:
     if not excluir_hospitales(hospital["nombre"],exclusiones):
         hospitales.append(hospital)
-numero = 1 
+numero = 1
 with open('SoloHospitales.json', 'w') as outfile:
     json.dump(hospitales, outfile)
 
