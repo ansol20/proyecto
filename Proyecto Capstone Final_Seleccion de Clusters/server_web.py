@@ -18,7 +18,7 @@ def calcular_distancia_euclidean(cord1,cord2):
     return math.sqrt((cord1[0]-cord2[0])**2 +(cord1[1]-cord2[1])**2+(cord1[2]-cord2[2])**2) #Calcular la distancia entre dos puntos con coordenadas cartesianas x,y,z
 
 
-PORT = 8000
+PORT = 8010
 
 class MyRequestHandler(http.server.SimpleHTTPRequestHandler):
     def do_GET(self):
