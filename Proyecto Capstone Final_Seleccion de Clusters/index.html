@@ -1,0 +1,254 @@
+<html>
+    <head>
+        <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css"
+        integrity="sha512-xodZBNTC5n17Xt2atTPuE1HxjVMSvLVW9ocqUKLsCC5CXdbqCmblAshOMAS6/keqq/sMZMZ19scR4PsZChSR7A=="
+        crossorigin=""/>
+        <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"
+        integrity="sha512-XQoYMqMTK8LvdxXYG3nZ448hOEQiglfqkJs1NOQV44cWnUrBc8PkAOcXy20w0vlaXaVUearIOBhiXZ5V3ynxwA=="
+        crossorigin=""></script>
+    </head>
+    <body>
+        <style> #map { height: 700px; }</style>
+        <table>
+            <tr>
+                <td>
+                    Inicio:
+                </td>
+                <td>
+                    <select id="inicio"></select>
+                </td>        
+                <td></td>        
+            </tr>
+            <tr>
+                <td>
+                    Final:
+                </td>
+                <td>
+                    <select id="final"></select>
+                </td>  
+                <td></td>                      
+            </tr> 
+            <tr>
+                <td>
+                    Tipo de conexion:
+                </td>
+                <td>
+                    <select id="cluster"><option>Cluster</option><option>Full connected</option></select>
+                </td>  
+                <td></td>                      
+            </tr> 
+            <tr>
+                <td>
+                    Numero de clusters:
+                </td>
+                <td>
+                    <select id="nclusters" onchange="create_new_cluster()"><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9" selected>9</option><option value="10">10</option></select>
+                </td>  
+                <td></td>                      
+            </tr>             
+            <tr>
+                <td>
+                    Distancia Maxima:
+                </td>
+                <td>
+                    <input type="range" id="dmax" min="2" max="14" value="14" step="0.1" onchange="change_val_id()">
+                   
+                </td>   
+             
+            </tr>                                    
+            <tr>
+                <td></td><td><p id="val">14</p></td><td></td>
+            </tr>
+        </table>
+
+        <br>
+        <button onclick='request_minimum_path(document.getElementById("inicio").selectedIndex,document.getElementById("final").selectedIndex,document.getElementById("cluster").selectedIndex,document.getElementById("nclusters").value,document.getElementById("dmax").value)'>
+            Buscar Ruta
+        </button>
+        
+        <button onclick='descargar_ruta()'> Descargar Ruta</button>
+        <br>
+        <br>
+        <br>
+
+        <div id="map"></div>
+       
+
+        <script>
+            function change_val_id(){
+                document.getElementById("val").innerHTML = document.getElementById("dmax").value;
+
+            }
+            document.getElementById("dmax").value = 14
+            let colors = ['#e41a1c', '#377eb8', '#4daf4a', '#984ea3', '#ff7f00', '#ffff33', '#a65628', '#f781bf', '#999999'];
+            let ruta = null;
+            let hospitales;
+            let map = L.map('map').setView([-0.089744, -78.476564], 13);
+            let layerRouter = new L.LayerGroup();
+            let LayerHospital = new L.LayerGroup();
+            var hospitalIcon = L.icon({
+                iconUrl: 'hospital42.png',
+                iconSize:     [16, 16], 
+                iconAnchor:   [8, 8], 
+                popupAnchor:  [0, -8] 
+            });
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            }).addTo(map);   
+            request_json_hospitales();                 
+            function request_minimum_path(origin,end,data,ncluster,distancia_maxima){
+
+                //console.log(origin,end);
+                if(origin==end){
+                    alert("Seleccione dos puntos distintos");
+                }
+                else{
+                    var oReq = new XMLHttpRequest();
+                    oReq.addEventListener("load", reqListener);
+                    //Aqui restricciones minimas y maximas
+                    if(distancia_maxima>14){
+                        document.getElementById("dmax").value=14;
+                        distancia_maxima =14;
+                    }
+
+                    oReq.open("GET", "/request_min_path?inicio=" +origin + "&" + "final=" +end+ "&data=" +data+ "&ncluster=" +ncluster + "&distancia_maxima=" +distancia_maxima);
+                    oReq.send();
+                 }
+            }
+            function request_json_hospitales(){
+                var oReq = new XMLHttpRequest();
+                oReq.addEventListener("load", lectura_hospitales);
+                oReq.open("GET",  "/hospitales_data_final");
+                oReq.send();
+            }
+            function request_json_center(){
+                var oReq = new XMLHttpRequest();
+                oReq.addEventListener("load", lectura_centros);
+                oReq.open("GET", "/centroides_final");
+                oReq.send();
+            }                        
+            function reqListener(data){
+                data = JSON.parse(data.currentTarget.response);
+                draw_rute(data.ruta);
+            }
+            function lectura_centros(data){
+                data = JSON.parse(data.currentTarget.response);
+                console.log(data);
+            }
+            function draw_rute(data){
+                 let nlayers = layerRouter.getLayers();
+                 for(i of nlayers){
+                     layerRouter.removeLayer(i._leaflet_id);
+                 }
+                 var pointList = [];
+    
+                ruta = {"ruta":[]};
+                 for(let i=0; i<data.length;i++){
+                     ruta.ruta.push([hospitales["Coordenada_hospital_"+document.getElementById("nclusters").value][data[i]][0],hospitales["Coordenada_hospital_"+document.getElementById("nclusters").value][data[i]][1]]);
+                     pointList.push(new L.LatLng(hospitales["Coordenada_hospital_"+document.getElementById("nclusters").value][data[i]][0], hospitales["Coordenada_hospital_"+document.getElementById("nclusters").value][data[i]][1]))
+                     color = "red"
+                     if(!i)
+                        color = "blue"
+                     else if(i==data.length-1)
+                        color = "green"
+                    let circle = L.circle(hospitales["Coordenada_hospital_"+document.getElementById("nclusters").value][data[i]],200, {
+                        color: color,
+                        fillColor: color,
+                        fillOpacity: 0.5
+                    }).addTo(layerRouter);
+                    
+                    
+                    
+                }
+                if(data.length==0){
+                    alert("No existe la ruta para esa distancia minima");
+                    ruta = null;
+                }
+                let firstpolyline = new L.Polyline(pointList, {
+                    color: 'red',
+                    weight: 3,
+                    opacity: 0.5,
+                    smoothFactor: 1
+                    });
+                firstpolyline.addTo(layerRouter);
+
+                map.addLayer(layerRouter);
+            }
+            function lectura_hospitales(data){
+                data = JSON.parse(data.currentTarget.response);
+                hospitales = data;
+                let select = document.getElementById("inicio");
+                let select2 = document.getElementById("final");
+                
+                for(numero in data.nombre){                  
+                    let option = document.createElement("option");
+                    option.innerHTML = data.nombre[numero];
+                    let option2 = document.createElement("option");
+                    option2.innerHTML = data.nombre[numero];
+                    select.appendChild(option);
+                    select2.appendChild(option2);
+                }
+
+                for(let i in hospitales["Coordenada_hospital_"+document.getElementById("nclusters").value]){
+                    let opacity = 0.2;
+                    if(hospitales["id"][i]==hospitales["hospitales_centros_"+document.getElementById("nclusters").value][i]){
+                        opacity = 1.0;
+                    }
+                    
+                    let circle = L.circle(hospitales["Coordenada_hospital_"+document.getElementById("nclusters").value][i],200, {
+                        color: colors[hospitales["cluster_"+document.getElementById("nclusters").value][i]],
+                        fillColor: colors[hospitales["cluster_"+document.getElementById("nclusters").value][i]],
+                        fillOpacity: opacity
+                    }).addTo(LayerHospital);
+                    let hmarker = L.marker(hospitales["Coordenada_hospital_"+document.getElementById("nclusters").value][i],{icon: hospitalIcon}).bindPopup(hospitales["nombre"][i]).addTo(LayerHospital);
+                    hmarker.circle = circle;
+                    map.addLayer(LayerHospital);
+                }
+            }
+            
+            function create_new_cluster(){
+                delete_layer_hospital();
+                for(let i in hospitales["Coordenada_hospital_"+document.getElementById("nclusters").value]){
+                    let opacity = 0.2;
+                    if(hospitales["id"][i]==hospitales["hospitales_centros_"+document.getElementById("nclusters").value][i]){
+                        opacity = 1.0;
+                    }
+                    
+                    let circle = L.circle(hospitales["Coordenada_hospital_"+document.getElementById("nclusters").value][i],200, {
+                        color: colors[hospitales["cluster_"+document.getElementById("nclusters").value][i]],
+                        fillColor: colors[hospitales["cluster_"+document.getElementById("nclusters").value][i]],
+                        fillOpacity: opacity
+                    }).addTo(LayerHospital);
+                    let hmarker = L.marker(hospitales["Coordenada_hospital_"+document.getElementById("nclusters").value][i],{icon: hospitalIcon}).bindPopup(hospitales["nombre"][i]).addTo(LayerHospital);
+                    hmarker.circle = circle;
+                    map.addLayer(LayerHospital);
+                }
+
+            }
+
+
+            function delete_layer_hospital(){
+                let nlayers = LayerHospital.getLayers();
+                 for(i of nlayers){                     
+                    LayerHospital.removeLayer(i._leaflet_id);
+                 }
+            }
+
+            function descargar_ruta(){
+                if(ruta){
+                    const a = document.createElement('a');
+                    a.setAttribute('href', 'data:text/plain;charset=utf-8, '+ encodeURIComponent(JSON.stringify(ruta))); 
+                    a.setAttribute('download', "ruta.txt");
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                }
+                else
+                    alert("No existe la ruta. No se puede descargar archivo");
+
+            }
+      
+        </script>
+
+    </body>
+</html>
